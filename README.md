@@ -49,3 +49,11 @@ Symfony Docker is available under the MIT License.
 ## Credits
 
 Created by [Kévin Dunglas](https://dunglas.dev), co-maintained by [Maxime Helias](https://twitter.com/maxhelias) and sponsored by [Les-Tilleuls.coop](https://les-tilleuls.coop).
+
+## Local
+* docker compose down --remove-orphans && docker compose build --pull --no-cache
+* docker compose up --pull always -d --wait
+* docker compose stop
+* docker exec -it symfony_demo-php-1 /bin/bash
+* https://localhost/
+* 

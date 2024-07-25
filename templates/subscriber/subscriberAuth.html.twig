@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Subscriber Auth{% endblock %}
+
+{% block body %}
+
+
+    <div class="example-wrapper">
+    </div>
+
+    <script>
+
+        const eventSource = new EventSource("{{ mercure(
+            'https://example.com/books/1',
+            { subscribe: 'https://example.com/books/1' }
+        )|escape('js') }}", {
+            withCredentials: true
+        });
+
+
+
+        eventSource.onmessage = event => {
+            console.log(JSON.parse(event.data));
+        }
+    </script>
+
+{% endblock %}

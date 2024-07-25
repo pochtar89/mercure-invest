@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Sibers Mercure Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chat.css">
+
+</head>
+<body>
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+<div class="container">
+
+    <div class="page-title">
+        <div class="row gutters">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+                <h5 class="title">Sibers Mercure Chat</h5>
+            </div>
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-12">
+            <div class="pull-right"><a href="{{ path('app_logout') }}">Logout</a></div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="content-wrapper">
+
+        <div class="row gutters">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+                <div class="card m-0">
+
+                    <div class="row no-gutters">
+                        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-3 col-3">
+                            <div class="users-container">
+                                <ul class="users">
+                                    {% for user in users %}
+                                        {% if currentUser != user %}
+                                            <li class="person {% if receiver and receiver.id == user.id %} active-user {% endif %}" data-chat="person" data-user_id="{{ user.id }}">
+                                                <div class="user">
+                                                    <img src="/{{ user.avatar }}">
+                                                </div>
+                                                <p class="name-time">
+                                                    <span class="name">{{ user.email }}</span>
+                                                </p>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-xl-8 col-lg-8 col-md-8 col-sm-9 col-9">
+                            {% if receiver %}
+                            <div class="selected-user">
+                                <span>To: <span class="name">{{ receiver.email }}</span></span>
+                            </div>
+                            <div class="chat-container">
+                                <ul class="chat-box chatContainerScroll">
+                                    {% for message in messages %}
+                                        {% if message.sender.id == currentUser.id %}
+                                            <li class="chat-right">
+                                                <div class="chat-hour">{{ message.createdAt | date('H:i') }}</div>
+                                                <div class="chat-text">{{ message.content }}</div>
+                                                <div class="chat-avatar">
+                                                    <img src="/{{ message.sender.avatar }}">
+                                                    <div class="chat-name">{{ message.sender.email }}</div>
+                                                </div>
+                                            </li>
+                                        {% else %}
+                                            <li class="chat-left">
+                                                <div class="chat-avatar">
+                                                    <img src="/{{ message.sender.avatar }}">
+                                                    <div class="chat-name">{{ message.sender.email }}</div>
+                                                </div>
+                                                <div class="chat-text">{{ message.content }}</div>
+                                                <div class="chat-hour">{{ message.createdAt | date('H:i') }}</div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                                <div class="form-group mt-3 mb-0">
+                                    <textarea class="form-control" rows="3" name="send-message"
+                                              placeholder="Type your message here..."></textarea>
+                                    <br>
+                                    <button class="pull-right btn btn-md btn-success">Send</button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript">
+    $('.person').click(function () {
+        window.location.href = "{{ path('chat') }}?receiverId="+$(this).attr('data-user_id')
+    });
+
+
+    {% if receiver %}
+        const receiverId = "{{receiver.id}}";
+
+        $('.btn-success').click(function () {
+            const $textArea = $('textarea[name="send-message"]');
+            const val = $textArea.val()
+
+            fetch('/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `content=${val}&receiver_id=${receiverId}`,
+            });
+            $textArea.val('');
+        });
+
+        const url = new URL("{{ mercure(chatId, { subscribe: chatId })|escape('js') }}");
+        const eventSource = new EventSource(url, {withCredentials: true});
+
+        eventSource.onmessage = function(event) {
+            const message = JSON.parse(event.data);
+
+            let html = '';
+            if (message.sender.id == receiverId) {
+                //left
+                html = `<li class="chat-left">
+                            <div class="chat-avatar">
+                                <img src="/${message.sender.avatar}">
+                                <div class="chat-name">${message.sender.email}</div>
+                            </div>
+                            <div class="chat-text">${message.content}</div>
+                            <div class="chat-hour">${message.createdAt}</div>
+                         </li>`;
+            } else {
+                //right
+                html = `<li class="chat-right">
+                    <div class="chat-hour">${message.createdAt}</div>
+                    <div class="chat-text">${message.content}</div>
+                    <div class="chat-avatar">
+                        <img src="/${message.sender.avatar}">
+                            <div class="chat-name">${message.sender.email}</div>
+                    </div>
+                </li>`;
+            }
+            $('.chatContainerScroll').append(html);
+        };
+    {% endif %}
+
+</script>
+</body>
+</html>

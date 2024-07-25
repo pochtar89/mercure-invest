@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Chat</h1>
+
+    <ul id="messages">
+        {% for message in messages %}
+            <li>{{ message.sender.email }}: {{ message.content }}</li>
+        {% endfor %}
+    </ul>
+
+    <form id="chat-form" action="{{ path('chat_send') }}" method="post">
+        <input type="text" id="message" placeholder="Type a message...">
+        <input type="hidden" id="receiver_id" value="{{ app.user.id }}">
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        const url = new URL('{{ mercure("http://example.com/chat/" ~ app.user.id) }}');
+        const eventSource = new EventSource(url);
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const messages = document.getElementById('messages');
+            const messageElement = document.createElement('li');
+            messageElement.textContent = data.message;
+            messages.appendChild(messageElement);
+        };
+
+        document.getElementById('chat-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const message = document.getElementById('message').value;
+            const receiverId = document.getElementById('receiver_id').value;
+
+            fetch('/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `content=${message}&receiver_id=${receiverId}`,
+            });
+
+            document.getElementById('message').value = '';
+        });
+    </script>
+{% endblock %}
